@@ -80,9 +80,9 @@ int main(int argc, char const *argv[])
      while(1)
      {
           int i;
-          char line[1028];
+          char line[1024];
           s = shm;
-          while(*s != '*')
+          while(*s == ' ')
                sleep(1);
           for (s = shm,i=0; (*s) != 0; s++,i++)
                line[i] = *s;

@@ -33,18 +33,20 @@ void create_shm(int *shmid,char **shm, key_t key)
           perror("shmat");
           exit(1);
      }
+
+     **shm = ' ';
 }
 
-void add_parameters(char **argU, key_t base, int offset)
+void write_command_in_shm(char *shm)
 {
-     // key_t newKey = base + offset;
-     //argU+=cant_parameters;
-
-     // int num = (offset>0)?key_right:key_left;
-     // char*str = malloc(16);
-     // snprintf(str, 16, "%d", num);
-     // argU[cant_parameters++] = str;
-     // argU[cant_parameters++] = (offset>0)?"1":"-1";
+     printf("send: %s\n", line);
+     char* send = line;
+     char *s = shm;
+     while(*send!=0)
+          *s++ = *send++;
+     printf("LLEgo aqui\n");
+     *s = '\0';
+     printf("Paso aqui\n");
 }
 
 void push(char **argU)
@@ -57,14 +59,24 @@ void push(char **argU)
      }
      else if(newVal<value)
      {
-          // add_parameters(argU, key_left, -1);
-          key_left = pid_left = execute(argU);
-          create_shm(&shmid_left, &shm_left,key_left);
+          if(pid_left==0)
+          {
+               key_left = pid_left = execute(argU);
+               create_shm(&shmid_left, &shm_left,key_left);
+          }else
+          {
+               write_command_in_shm(shm_left);
+          }
      }else
      {
-          // add_parameters(argU, key_right, 1);
-          key_right = pid_right = execute(argU);
-          create_shm(&shmid_right, &shm_right, key_right);
+          if(pid_right==0)
+          {
+               key_right = pid_right = execute(argU);
+               create_shm(&shmid_right, &shm_right, key_right);
+          }else
+          {
+               write_command_in_shm(shm_right);
+          }
      }
 }
 
@@ -118,21 +130,24 @@ int main(int argc, char const *argv[])
      {
           printf("$ ");
           gets(line);
-          cant_parameters = parse(line,argU);
+          char buffer[1024];
+          memcpy(buffer,line,1024);
+          cant_parameters = parse(buffer,argU);
           if (strcmp(argU[1], "exit") == 0)  /* is it an "exit"?     */
              exit(1);
           if (strcmp(argU[1], "push") == 0)
                push(argU);
           if (strcmp(argU[1], "write") == 0)
           {
-               char* send = argU[2];
-               r = shm_right;
-               *r++ = '*';
-               while(*send!=NULL)
-                    *r++ = *send++;
-               printf("LLEgo aqui\n");
-               *r = '\0';
-               printf("Paso aqui\n");
+               // char* send = line;
+               // r = shm_right;
+               // *r++ = '*';
+               // *r++ = ' ';
+               // while(*send!=0)
+               //      *r++ = *send++;
+               // printf("LLEgo aqui\n");
+               // *r = '\0';
+               // printf("Paso aqui\n");
           }
      }    
 
