@@ -89,6 +89,21 @@ void push(char **argU)
      }
 }
 
+void search(char **argU)
+{
+     printf("arg S: %s\n", argU[2]);
+     int srchVal = atoi(argU[2]);
+     if (value==srchVal)
+     {
+          printf("PID of value(%d): %d\n", srchVal, getpid());
+     }else{
+          if(pid_left!=0)
+               write_command_in_shm(shm_left);
+          if(pid_right!=0)
+               write_command_in_shm(shm_right);
+     }
+}
+
 int  parse(char *line, char **argU)
 {
      printf("line: \n",line);
@@ -162,6 +177,8 @@ int main(int argc, char const *argv[])
           printf("c2: %s\n", argU[2]);
           if(strcmp(argU[1],"push")==0)
                push(argU);
+          if(strcmp(argU[1], "search")==0)
+               search(argU);
 
      }
 
