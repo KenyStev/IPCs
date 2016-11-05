@@ -16,6 +16,46 @@ char *shm, *shm_left, *shm_right, *s, *l, *r;
 char line[1024];
 char  *argU[64];
 
+int  parse(char *line, char **argU)
+{
+     printf("line: \n",line);
+     int cant=1;
+     *argU = "./ptree_node_shm";
+     *argU++;
+     while (*line != '\0') {       /* if not the end of line ....... */ 
+          while (*line == ' ' || *line == '\t' || *line == '\n')
+          {
+                    *line++ = '\0';     /* replace white spaces with 0    */
+                    cant++;
+          }
+          *argU++ = line;          /* save the argvent position     */
+          while (*line != '\0' && *line != ' ' && 
+                 *line != '\t' && *line != '\n') 
+               line++;             /* skip the argvent until ...    */
+     }
+    *argU = '\0';                 /* mark the end of argvent list  */
+     cant++;
+     return cant;
+}
+
+pid_t  execute(char **argU)
+{
+     pid_t  pid;
+
+     if ((pid = fork()) < 0) {     /* fork a child process           */
+          printf("*** ERROR: forking child process failed\n");
+          exit(1);
+     }
+     else if (pid == 0) {          /* for the child process:         */
+          if (execvp(*argU, argU) < 0) {     /* execute the command  */
+               printf("*** ERROR: exec failed\n");
+               exit(1);
+          }
+     }
+     printf("My child's PID: %d\n", pid);
+     return pid;
+}
+
 void locate_shm(int *shmid,char **shm, key_t key)
 {
      if ((*shmid = shmget(key, SHMSZ, 0666)) < 0) {
@@ -102,46 +142,6 @@ void search(char **argU)
           if(pid_right!=0)
                write_command_in_shm(shm_right);
      }
-}
-
-int  parse(char *line, char **argU)
-{
-     printf("line: \n",line);
-     int cant=1;
-     *argU = "./ptree_node_shm";
-     *argU++;
-     while (*line != '\0') {       /* if not the end of line ....... */ 
-          while (*line == ' ' || *line == '\t' || *line == '\n')
-          {
-                    *line++ = '\0';     /* replace white spaces with 0    */
-                    cant++;
-          }
-          *argU++ = line;          /* save the argvent position     */
-          while (*line != '\0' && *line != ' ' && 
-                 *line != '\t' && *line != '\n') 
-               line++;             /* skip the argvent until ...    */
-     }
-    *argU = '\0';                 /* mark the end of argvent list  */
-     cant++;
-     return cant;
-}
-
-pid_t  execute(char **argU)
-{
-     pid_t  pid;
-
-     if ((pid = fork()) < 0) {     /* fork a child process           */
-          printf("*** ERROR: forking child process failed\n");
-          exit(1);
-     }
-     else if (pid == 0) {          /* for the child process:         */
-          if (execvp(*argU, argU) < 0) {     /* execute the command  */
-               printf("*** ERROR: exec failed\n");
-               exit(1);
-          }
-     }
-     printf("My child's PID: %d\n", pid);
-     return pid;
 }
 
 /* argv
