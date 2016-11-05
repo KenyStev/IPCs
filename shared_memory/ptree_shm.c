@@ -16,11 +16,10 @@ char *shm;
 char  line[1024];
 char  *argU[64];
 int cant_parameters=0;
+int child_exit_status;
 
-void kill_child(pid_t child_pid)
-{
-    kill(child_pid,SIGKILL);
-}
+/* Handle SIGCHLD by calling clean_up_child_process.  */
+struct sigaction sigchld_action;
 
 int  parse(char *line, char **argU)
 {
@@ -86,9 +85,9 @@ void write_command_in_shm(char *shm)
      char *s = shm;
      while(*send!=0)
           *s++ = *send++;
-     printf("LLEgo aqui\n");
+     // printf("LLEgo aqui\n");
      *s = '\0';
-     printf("Paso aqui\n");
+     // printf("Paso aqui\n");
 }
 
 void push(char **argU)
@@ -117,6 +116,30 @@ void search(char **argU)
      }
 }
 
+void kill_child(char **argU)
+{
+     int killVal = atoi(argU[2]);
+     if (pid_s>0)
+     {
+          write_command_in_shm(shm);
+     }else{
+          printf("There's no root\n");
+     }
+}
+
+void clean_up_child_process (int signal_number)
+{
+     /* Clean up the child process.  */
+     int status;
+     pid_t pid = wait (&status);
+     printf("PID Handle: \n", pid);
+     /* Store its exit status in a global variable.  */
+     child_exit_status = status;
+
+     if(pid==pid_s)
+          pid_s=0;
+}
+
 int main(int argc, char const *argv[])
 {
      while(1)
@@ -132,6 +155,13 @@ int main(int argc, char const *argv[])
                push(argU);
           if (strcmp(argU[1], "search") == 0)
                search(argU);
+          if (strcmp(argU[1], "kill") == 0)
+          {
+               kill_child(argU);
+               memset (&sigchld_action, 0, sizeof (sigchld_action));
+               sigchld_action.sa_handler = &clean_up_child_process;
+               sigaction (SIGCHLD, &sigchld_action, NULL);
+          }
      }    
 
      return 0;

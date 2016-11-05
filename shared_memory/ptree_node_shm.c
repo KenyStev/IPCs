@@ -5,10 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #define SHMSZ     128
 
 int value=0;
+sig_atomic_t child_exit_status;
 int shmid, shmid_left, shmid_right;
 key_t key_parent=0, key_left=0, key_right=0;
 pid_t pid_left, pid_right;
@@ -57,9 +59,9 @@ void write_command_in_shm(char *shm)
      char *s = shm;
      while(*send!=0)
           *s++ = *send++;
-     printf("LLEgo aqui\n");
+     // printf("LLEgo aqui\n");
      *s = '\0';
-     printf("Paso aqui\n");
+     // printf("Paso aqui\n");
 }
 
 void push(char **argU)
@@ -106,7 +108,7 @@ void search(char **argU)
 
 int  parse(char *line, char **argU)
 {
-     printf("line: \n",line);
+     // printf("line: \n",line);
      int cant=1;
      *argU = "./ptree_node_shm";
      *argU++;
@@ -140,8 +142,69 @@ pid_t  execute(char **argU)
                exit(1);
           }
      }
-     printf("My child's PID: %d\n", pid);
+     // printf("My child's PID: %d\n", pid);
      return pid;
+}
+
+void clean_up_child_process (int signal_number)
+{
+     /* Clean up the child process.  */
+     int status;
+     pid_t pid = wait (&status);
+     printf("PID Handle: \n", pid);
+     /* Store its exit status in a global variable.  */
+     child_exit_status = status;
+
+     if(pid==pid_left)
+          pid_left=0;
+     else if(pid==pid_right)
+          pid_right=0;
+}
+
+/* Handle SIGCHLD by calling clean_up_child_process.  */
+struct sigaction sigchld_action;
+
+void kill_children()
+{
+     memcpy(line,"kill_children",64);
+     if(pid_left>0)
+     {
+          write_command_in_shm(shm_left);
+          // waitpid(pid_left, &child_exit_status, WUNTRACED);
+          memset (&sigchld_action, 0, sizeof (sigchld_action));
+          sigchld_action.sa_handler = &clean_up_child_process;
+          sigaction (SIGCHLD, &sigchld_action, NULL);
+     }
+     if(pid_right>0)
+     {
+          write_command_in_shm(shm_right);
+          // waitpid(pid_right, &child_exit_status, WUNTRACED);
+          memset (&sigchld_action, 0, sizeof (sigchld_action));
+          sigchld_action.sa_handler = &clean_up_child_process;
+          sigaction (SIGCHLD, &sigchld_action, NULL);
+     }
+     exit(0);
+}
+
+void kill_child(char **argU)
+{
+     int killVal = atoi(argU[2]);
+     if (value==killVal)
+     {
+          kill_children();
+     }else if(killVal<value){
+          write_command_in_shm(shm_left);
+
+          memset (&sigchld_action, 0, sizeof (sigchld_action));
+          sigchld_action.sa_handler = &clean_up_child_process;
+          sigaction (SIGCHLD, &sigchld_action, NULL);
+     }else{
+          write_command_in_shm(shm_right);
+          
+          memset (&sigchld_action, 0, sizeof (sigchld_action));
+          sigchld_action.sa_handler = &clean_up_child_process;
+          sigaction (SIGCHLD, &sigchld_action, NULL);
+     }
 }
 
 /* argv
@@ -151,7 +214,7 @@ pid_t  execute(char **argU)
  */
 int main(int argc, char const *argv[])
 {
-     printf("My PID: %d\n", getpid());
+     // printf("My PID: %d\n", getpid());
      value = atoi(argv[2]);
      key_parent = getpid();
      locate_shm(&shmid,&shm,key_parent);
@@ -173,12 +236,16 @@ int main(int argc, char const *argv[])
           char buffer[1024];
           memcpy(buffer,line,1024);
           parse(buffer,argU);
-          printf("c1: %s\n", argU[1]);
-          printf("c2: %s\n", argU[2]);
+          // printf("c1: %s\n", argU[1]);
+          // printf("c2: %s\n", argU[2]);
           if(strcmp(argU[1],"push")==0)
                push(argU);
           if(strcmp(argU[1], "search")==0)
                search(argU);
+          if (strcmp(argU[1], "kill") == 0)
+               kill_child(argU);
+          if (strcmp(argU[1], "kill_children") == 0)
+               kill_children();
 
      }
 
