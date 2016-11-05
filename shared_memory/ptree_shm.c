@@ -9,90 +9,17 @@
 
 #define SHMSZ     128
 
-int state=0;
-int value=0;
-int shmid_left, shmid_right;
-key_t key_left=0, key_right=0;
-pid_t pid_left, pid_right;
-char *shm_left, *shm_right, *l, *r;
+int shmid;
+key_t key=0;
+pid_t pid_s=0;
+char *shm;
 char  line[1024];
 char  *argU[64];
 int cant_parameters=0;
 
-void create_shm(int *shmid,char **shm, key_t key)
+void kill_child(pid_t child_pid)
 {
-     if ((*shmid = shmget(key, SHMSZ, IPC_CREAT | 0666)) < 0) {
-          perror("shmget");
-          exit(1);
-     }
-
-     /*
-     * Now we attach the segment to our data space.
-     */
-     if ((*shm = shmat(*shmid, NULL, 0)) == (char *) -1) {
-          perror("shmat");
-          exit(1);
-     }
-
-     **shm = ' ';
-}
-
-void write_command_in_shm(char *shm)
-{
-     printf("send: %s\n", line);
-     char* send = line;
-     char *s = shm;
-     while(*send!=0)
-          *s++ = *send++;
-     printf("LLEgo aqui\n");
-     *s = '\0';
-     printf("Paso aqui\n");
-}
-
-void push(char **argU)
-{
-     printf("arg: %s\n", argU[2]);
-     int newVal = atoi(argU[2]);
-     if(state==0){
-          value = newVal;
-          state=1;
-     }
-     else if(newVal<value)
-     {
-          if(pid_left==0)
-          {
-               key_left = pid_left = execute(argU);
-               create_shm(&shmid_left, &shm_left,key_left);
-          }else
-          {
-               write_command_in_shm(shm_left);
-          }
-     }else
-     {
-          if(pid_right==0)
-          {
-               key_right = pid_right = execute(argU);
-               create_shm(&shmid_right, &shm_right, key_right);
-          }else
-          {
-               write_command_in_shm(shm_right);
-          }
-     }
-}
-
-void search(char **argU)
-{
-     printf("arg: %s\n", argU[2]);
-     int srchVal = atoi(argU[2]);
-     if (value==srchVal)
-     {
-          printf("PID of value(%d): %d\n", srchVal, getpid());
-     }else{
-          if(pid_left!=0)
-               write_command_in_shm(shm_left);
-          if(pid_right!=0)
-               write_command_in_shm(shm_right);
-     }
+    kill(child_pid,SIGKILL);
 }
 
 int  parse(char *line, char **argU)
@@ -134,9 +61,60 @@ pid_t  execute(char **argU)
      return pid;
 }
 
-void kill_child(pid_t child_pid, int sig)
+void create_shm(int *shmid,char **shm, key_t key)
 {
-    kill(child_pid,SIGKILL);
+     if ((*shmid = shmget(key, SHMSZ, IPC_CREAT | 0666)) < 0) {
+          perror("shmget");
+          exit(1);
+     }
+
+     /*
+     * Now we attach the segment to our data space.
+     */
+     if ((*shm = shmat(*shmid, NULL, 0)) == (char *) -1) {
+          perror("shmat");
+          exit(1);
+     }
+
+     **shm = ' ';
+}
+
+void write_command_in_shm(char *shm)
+{
+     printf("send: %s\n", line);
+     char* send = line;
+     char *s = shm;
+     while(*send!=0)
+          *s++ = *send++;
+     printf("LLEgo aqui\n");
+     *s = '\0';
+     printf("Paso aqui\n");
+}
+
+void push(char **argU)
+{
+     // printf("arg: %s\n", argU[2]);
+     int newVal = atoi(argU[2]);
+     if(pid_s==0){
+          key = pid_s = execute(argU);
+          create_shm(&shmid, &shm,key);
+     }
+     else
+     {
+          write_command_in_shm(shm);
+     }
+}
+
+void search(char **argU)
+{
+     // printf("arg: %s\n", argU[2]);
+     int srchVal = atoi(argU[2]);
+     if (pid_s>0)
+     {
+          write_command_in_shm(shm);
+     }else{
+          printf("There's no root\n");
+     }
 }
 
 int main(int argc, char const *argv[])
