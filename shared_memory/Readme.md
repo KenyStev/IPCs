@@ -36,7 +36,7 @@ key = pid_s = execute();
 ```
 `shmget` recibe el `key_t`, `SHMSZ` es el tamaño en bytes, y las flags: `IPC_CREAT | 0666` para decirle que lo cree y que nos de permiso de escritura y lectura.
 
-`shmat` recibe el identificador que nos devolvio `shmget`, `NULL` para decirle que nos asigne un nuevo apuntador donde comienza nuestra memoria compartida, `0` no recibe ningina flag.
+`shmat` recibe el identificador que nos devolvio `shmget`, `NULL` para decirle que nos asigne un nuevo apuntador donde comienza nuestra memoria compartida, `0` no recibe ninguna flag.
 
 ahora en `shm` tenemos la direccion donde comienza nuestra memoria.
 
