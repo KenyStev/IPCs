@@ -148,6 +148,17 @@ void kill_child(char **argU)
      }
 }
 
+void show_commands()
+{
+     printf("%s\n%s\n%s\n%s\n%s\n"
+          ,"Commands"
+          ,"push <num>"
+          ,"search <num>"
+          ,"kill <num>"
+          ,"exit"
+          );
+}
+
 int main(int argc, char const *argv[])
 {
      while(1)
@@ -165,7 +176,7 @@ int main(int argc, char const *argv[])
                exit(0);
           }else if (strcmp(argU[1], "help") == 0)
           {
-               printf("%s\n%s\n%s\n%s\n%s\n", );
+               show_commands();
           }else if(cant_parameters>2)
           {
                if (strcmp(argU[1], "push") == 0)
