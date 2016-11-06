@@ -1,6 +1,6 @@
 # Crear un Shared Memory
 Necesitamos un `key_t` que debe ser unico, es una llave que va a identificar nuestro vector compartido
-en este caso estamos usando el `pid_t` del padre como key
+en este caso estamos usando el `pid_t` del hijo como key
 
 ## tenemos:
 ```c
