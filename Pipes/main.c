@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <signal.h>
 #include "fifo.h"
 
 int menu();
@@ -19,11 +20,25 @@ pid_t root;
 int fd;
 char * myfifo;
 
+void clean_up_child_process (int signal_number)
+{
+    /* Clean up the child process. */
+    int status;
+    pid_t pid = wait(&status);
+
+    if(pid == root){
+    	root = 0;
+    	printf("Before closeFifoWM: %s\n", myfifo );
+    	closeFifoWM(fd, &myfifo);
+    }
+}
+
 int main(){
 	int menuOption;
 	int nodeValue;
 
 	printf("Process running in pid: %d\n", getpid());
+	myfifo = malloc(10*sizeof(char));
 
 	do{
 		menuOption = menu();
@@ -36,7 +51,7 @@ int main(){
 			pressAnyKey();
 		}
 	}while(menuOption != 4);
-	closeFifoWM(fd, myfifo);
+	//closeFifoWM(fd, &myfifo);
 	return 0;
 }
 
@@ -69,6 +84,7 @@ void pressAnyKey(){
 }
 
 void doAction(int option, int nodeValue){
+	//printf("- Main - DoAction - fifo_name: %s\n", myfifo);
 	switch(option){
 		case 1:
 			createNode(nodeValue);
@@ -99,7 +115,12 @@ void createNode(int nodeValue){
 			params[2] = NULL;
 			execv("node", params);
 		}else{ //parent
-			createFIFO(&fd, myfifo, root);
+			createFIFO(&fd, &myfifo, root);
+			//printf("After CreateFifo: %s\n", myfifo);
+			struct sigaction sigchld_action;
+			memset (&sigchld_action, 0, sizeof (sigchld_action));
+			sigchld_action.sa_handler = &clean_up_child_process;
+			sigaction (SIGCHLD, &sigchld_action, NULL);
 		}
 	}else{
 		char bf[10];
@@ -121,5 +142,11 @@ void searchNode(int nodeValue){
 }
 
 void deleteNode(int nodeValue){
-	sendMessage(fd, "Delete");
+	char buffer[3];
+	strcpy(buffer, "");
+	sprintf(buffer, "%d", nodeValue);
+	char bf[10];
+	strcpy(bf, "Delete ");
+	strcat(bf, buffer);
+	sendMessage(fd, bf);
 }

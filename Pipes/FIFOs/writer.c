@@ -17,11 +17,14 @@ int main()
     fd = open(myfifo, O_WRONLY);
 
     write(fd, "Hi", sizeof("Hi"));
+    write(fd, "*", sizeof("*"));
 
     close(fd);
 
     /* remove the FIFO */
     unlink(myfifo);
+
+    printf("Writer finish\n");
 
     return 0;
 }
