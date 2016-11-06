@@ -163,8 +163,10 @@ int main(int argc, char const *argv[])
                parse(line,argU);
                kill_child(argU);
                exit(0);
-          }
-          else if(cant_parameters>2)
+          }else if (strcmp(argU[1], "help") == 0)
+          {
+               printf("%s\n%s\n%s\n%s\n%s\n", );
+          }else if(cant_parameters>2)
           {
                if (strcmp(argU[1], "push") == 0)
                     push(argU);
