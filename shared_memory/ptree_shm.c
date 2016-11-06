@@ -31,7 +31,16 @@ void clean_up_child_process (int signal_number)
      child_exit_status = status;
 
      if(pid==pid_s)
+     {
+          free_shm(shm,shmid);
           pid_s=0;
+     }
+}
+
+void free_shm(char *shm, int shmid)
+{
+     shmdt(shm);
+     shmctl(shmid, IPC_RMID, NULL);
 }
 
 void wait_async()
@@ -82,6 +91,9 @@ pid_t  execute(char **argU)
 
 void create_shm(int *shmid,char **shm, key_t key)
 {
+     /*
+     * Create the segment.
+     */
      if ((*shmid = shmget(key, SHMSZ, IPC_CREAT | 0666)) < 0) {
           perror("shmget");
           exit(1);
@@ -148,19 +160,32 @@ void kill_child(char **argU)
      }
 }
 
+void kill_everything()
+{
+     if(pid_s>0)
+     {
+          memcpy(line,"kill_children 0",1024);
+          parse(line,argU);
+          kill_child(argU);
+          free_shm(shm,shmid);
+     }
+}
+
 void show_commands()
 {
-     printf("%s\n%s\n%s\n%s\n%s\n"
+     printf("%s\n%s\n%s\n%s\n%s\n%s\n"
           ,"Commands"
           ,"push <num>"
           ,"search <num>"
           ,"kill <num>"
+          ,"help"
           ,"exit"
           );
 }
 
 int main(int argc, char const *argv[])
 {
+     show_commands();
      while(1)
      {
           printf("$ ");
@@ -170,9 +195,7 @@ int main(int argc, char const *argv[])
           cant_parameters = parse(buffer,argU);
           if (strcmp(argU[1], "exit") == 0)  /* is it an "exit"?     */
           {
-               memcpy(line,"kill_children 0",1024);
-               parse(line,argU);
-               kill_child(argU);
+               kill_everything();
                exit(0);
           }else if (strcmp(argU[1], "help") == 0)
           {
@@ -190,6 +213,8 @@ int main(int argc, char const *argv[])
           }else{
                perror("very few parameters!\n");
           }
+          sleep(1);
+          printf("\n");
      }    
 
      return 0;

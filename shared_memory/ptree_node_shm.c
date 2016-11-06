@@ -30,9 +30,15 @@ void clean_up_child_process (int signal_number)
      child_exit_status = status;
 
      if(pid==pid_left)
+     {
+          free_shm(shm_left,shmid_left);
           pid_left=0;
+     }
      else if(pid==pid_right)
+     {
+          free_shm(shm_right,shmid_right);
           pid_right=0;
+     }
 }
 
 void wait_async()
@@ -40,6 +46,12 @@ void wait_async()
      memset (&sigchld_action, 0, sizeof (sigchld_action));
      sigchld_action.sa_handler = &clean_up_child_process;
      sigaction (SIGCHLD, &sigchld_action, NULL);
+}
+
+void free_shm(char *shm, int shmid)
+{
+     shmdt(shm);
+     shmctl(shmid, IPC_RMID, NULL);
 }
 
 int  parse(char *line, char **argU)
@@ -84,6 +96,9 @@ pid_t  execute(char **argU)
 
 void locate_shm(int *shmid,char **shm, key_t key)
 {
+     /*
+     * Locate the segment.
+     */
      if ((*shmid = shmget(key, SHMSZ, 0666)) < 0) {
           perror("shmget");
           exit(1);
@@ -100,6 +115,9 @@ void locate_shm(int *shmid,char **shm, key_t key)
 
 void create_shm(int *shmid,char **shm, key_t key)
 {
+     /*
+     * Create the segment.
+     */
      if ((*shmid = shmget(key, SHMSZ, IPC_CREAT | 0666)) < 0) {
           perror("shmget");
           exit(1);
@@ -176,10 +194,12 @@ void kill_children()
      if(pid_left>0)
      {
           write_command_in_shm(shm_left);
+          free_shm(shm_left,shmid_left);
      }
      if(pid_right>0)
      {
           write_command_in_shm(shm_right);
+          free_shm(shm_right,shmid_right);
      }
      exit(0);
 }
@@ -189,6 +209,7 @@ void kill_child(char **argU)
      int killVal = atoi(argU[2]);
      if (value==killVal)
      {
+          free_shm(shm,shmid);
           kill_children();
      }else if(killVal<value){
           write_command_in_shm(shm_left);
