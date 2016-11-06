@@ -1,8 +1,8 @@
-## Crear un Shared Memory
+# Crear un Shared Memory
 Necesitamos un `key_t` que debe ser unico, es una llave que va a identificar nuestro vector compartido
 en este caso estamos usando el `pid_t` del padre como key
 
-# tenemos:
+## tenemos:
 ```c
 int shmid;
 key_t key=0;
@@ -10,7 +10,7 @@ pid_t pid_s=0;
 char *shm;
 ```
 
-# creamos
+## creamos
 ```c
 /*
  * Create the segment.
@@ -41,19 +41,23 @@ cuando llamamos `shmat` estamos anclando nuestro proceso a ese espacio de memori
 > y hacemos lo mismo que para crear, pero le quitamos solamente el flag: `IPC_CREAT` 
 > y lo demas es exactamente igual.
 
-# Desanclar
+## Desanclar
 ```c
 shmdt(shm);
 ```
 para desanclar nuestro proceso de la memoria compartida, solo necesitamos el apuntador donde esta comienza, que es el mismo que nos fue devuelto por: `shmat`.
 
-# Borrar
+## Borrar
 ```c
 shmctl(shmid, IPC_RMID, NULL);
 ```
 para borrar nuestra memoria compartida y liberar nustra RAM, solo necesitamos el identificador que nos fue devuelto por: `shmget`.
 
 Fuente:
-=======
+-------
 > [Crear y Usar](http://users.cs.cf.ac.uk/Dave.Marshall/C/node27.html)
 > [Borrar y Desanclar](http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/shm/shmdt.html)
+
+Ejercicio desarrollado por:
+---------------------------
+Kevin J. Estevez - @kenystev
