@@ -91,6 +91,9 @@ pid_t  execute(char **argU)
 
 void create_shm(int *shmid,char **shm, key_t key)
 {
+     /*
+     * Create the segment.
+     */
      if ((*shmid = shmget(key, SHMSZ, IPC_CREAT | 0666)) < 0) {
           perror("shmget");
           exit(1);
