@@ -5,16 +5,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #define SHMSZ     128
 
 int value=0;
+sig_atomic_t child_exit_status;
 int shmid, shmid_left, shmid_right;
 key_t key_parent=0, key_left=0, key_right=0;
 pid_t pid_left, pid_right;
 char *shm, *shm_left, *shm_right, *s, *l, *r;
 char line[1024];
 char  *argU[64];
+/* Handle SIGCHLD by calling clean_up_child_process.  */
+struct sigaction sigchld_action;
+
+void clean_up_child_process (int signal_number)
+{
+     /* Clean up the child process.  */
+     int status;
+     pid_t pid = wait (&status);
+     printf("PID killed: %d\n", pid);
+     /* Store its exit status in a global variable.  */
+     child_exit_status = status;
+
+     if(pid==pid_left)
+          pid_left=0;
+     else if(pid==pid_right)
+          pid_right=0;
+}
+
+void wait_async()
+{
+     memset (&sigchld_action, 0, sizeof (sigchld_action));
+     sigchld_action.sa_handler = &clean_up_child_process;
+     sigaction (SIGCHLD, &sigchld_action, NULL);
+}
 
 int  parse(char *line, char **argU)
 {
@@ -97,9 +123,7 @@ void write_command_in_shm(char *shm)
      char *s = shm;
      while(*send!=0)
           *s++ = *send++;
-     printf("LLEgo aqui\n");
      *s = '\0';
-     printf("Paso aqui\n");
 }
 
 void push(char **argU)
@@ -112,6 +136,7 @@ void push(char **argU)
           {
                key_left = pid_left = execute(argU);
                create_shm(&shmid_left, &shm_left,key_left);
+               wait_async();
           }else
           {
                write_command_in_shm(shm_left);
@@ -122,6 +147,7 @@ void push(char **argU)
           {
                key_right = pid_right = execute(argU);
                create_shm(&shmid_right, &shm_right, key_right);
+               wait_async();
           }else
           {
                write_command_in_shm(shm_right);
@@ -144,6 +170,33 @@ void search(char **argU)
      }
 }
 
+void kill_children()
+{
+     memcpy(line,"kill_children",64);
+     if(pid_left>0)
+     {
+          write_command_in_shm(shm_left);
+     }
+     if(pid_right>0)
+     {
+          write_command_in_shm(shm_right);
+     }
+     exit(0);
+}
+
+void kill_child(char **argU)
+{
+     int killVal = atoi(argU[2]);
+     if (value==killVal)
+     {
+          kill_children();
+     }else if(killVal<value){
+          write_command_in_shm(shm_left);
+     }else{
+          write_command_in_shm(shm_right);
+     }
+}
+
 /* argv
  * 0- name
  * 1- command (push)
@@ -151,7 +204,7 @@ void search(char **argU)
  */
 int main(int argc, char const *argv[])
 {
-     printf("My PID: %d\n", getpid());
+     // printf("My PID: %d\n", getpid());
      value = atoi(argv[2]);
      key_parent = getpid();
      locate_shm(&shmid,&shm,key_parent);
@@ -173,12 +226,15 @@ int main(int argc, char const *argv[])
           char buffer[1024];
           memcpy(buffer,line,1024);
           parse(buffer,argU);
-          printf("c1: %s\n", argU[1]);
-          printf("c2: %s\n", argU[2]);
+          
           if(strcmp(argU[1],"push")==0)
                push(argU);
           if(strcmp(argU[1], "search")==0)
                search(argU);
+          if (strcmp(argU[1], "kill_children") == 0)
+               kill_children();
+          if (strcmp(argU[1], "kill") == 0)
+               kill_child(argU);
 
      }
 
