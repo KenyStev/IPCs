@@ -31,7 +31,9 @@ void clean_up_child_process (int signal_number)
      child_exit_status = status;
 
      if(pid==pid_s)
+     {
           pid_s=0;
+     }
 }
 
 void wait_async()
@@ -159,6 +161,12 @@ void show_commands()
           );
 }
 
+void free_shm()
+{
+     shmdt(shm);
+     shmctl(shmid, IPC_RMID, NULL);
+}
+
 int main(int argc, char const *argv[])
 {
      while(1)
@@ -173,6 +181,7 @@ int main(int argc, char const *argv[])
                memcpy(line,"kill_children 0",1024);
                parse(line,argU);
                kill_child(argU);
+               free_shm();
                exit(0);
           }else if (strcmp(argU[1], "help") == 0)
           {

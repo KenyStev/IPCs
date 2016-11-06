@@ -30,9 +30,13 @@ void clean_up_child_process (int signal_number)
      child_exit_status = status;
 
      if(pid==pid_left)
+     {
           pid_left=0;
+     }
      else if(pid==pid_right)
+     {
           pid_right=0;
+     }
 }
 
 void wait_async()
@@ -40,6 +44,12 @@ void wait_async()
      memset (&sigchld_action, 0, sizeof (sigchld_action));
      sigchld_action.sa_handler = &clean_up_child_process;
      sigaction (SIGCHLD, &sigchld_action, NULL);
+}
+
+void free_shm(char *shm, int shmid)
+{
+     shmdt(shm);
+     shmctl(shmid, IPC_RMID, NULL);
 }
 
 int  parse(char *line, char **argU)
@@ -176,10 +186,12 @@ void kill_children()
      if(pid_left>0)
      {
           write_command_in_shm(shm_left);
+          free_shm(shm_left,shmid_left);
      }
      if(pid_right>0)
      {
           write_command_in_shm(shm_right);
+          free_shm(shm_right,shmid_right);
      }
      exit(0);
 }
