@@ -1,1 +1,0 @@
-void create(int val);
