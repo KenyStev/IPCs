@@ -10,7 +10,7 @@ void clean_up_child_process (int signal_number)
   child_exit_status = status;
 }
 
-void waitAsyc(){
+void waitAsync(){
   /* Handle SIGCHLD by calling clean_up_child_process.  */
   memset (&sigchld_action, 0, sizeof (sigchld_action));
   sigchld_action.sa_handler = &clean_up_child_process;

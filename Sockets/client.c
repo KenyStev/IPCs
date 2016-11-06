@@ -42,7 +42,7 @@ void socketConfig(int * sock, struct sockaddr_in* server){
 }
 
 void socket_write(int* sock){
-  char message[1000] , server_reply[2000];
+  char message[20] , server_reply[20];
   while(1)
   {
     printf("Enter message : ");
@@ -56,7 +56,7 @@ void socket_write(int* sock){
     }
 
     //Receive a reply from the server
-    if( recv(*sock , server_reply , 2000 , 0) < 0)
+    if( recv(*sock , server_reply , 10 , 0) < 0)
     {
       puts("recv failed");
       break;

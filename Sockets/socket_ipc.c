@@ -4,8 +4,9 @@
 #include <netinet/in.h>
 #include <string.h>
 
-void doprocessing (int sock);
+int doprocessing (int sock);
 void socket_serv();
+void server_write(int* sockfd, struct sockaddr_in* cli_addr, int* clilen);
 
 int main( int argc, char *argv[] ) {
   socket_serv();
@@ -15,10 +16,11 @@ int main( int argc, char *argv[] ) {
 
 void socket_serv()
 {
-  int sockfd, newsockfd, portno, clilen;
-  char buffer[256];
+  int sockfd, portno, clilen;
+  // int newsockfd;
+  char buffer[20];
   struct sockaddr_in serv_addr, cli_addr;
-  int n, pid;
+  int n;
 
   /* First call to socket() function */
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,9 +44,14 @@ void socket_serv()
 
   listen(sockfd, 5);
   clilen = sizeof(cli_addr);
+  server_write(&sockfd, &cli_addr, &clilen);
+}
 
+void server_write(int* sockfd, struct sockaddr_in* cli_addr, int* clilen)
+{
+  int newsockfd, pid;
   while (1) {
-     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+     newsockfd = accept(*sockfd, (struct sockaddr *) cli_addr, clilen);
      printf("Accepted connection with %d\n", newsockfd);
      if (newsockfd < 0) {
         perror("ERROR on accept");
@@ -60,19 +67,24 @@ void socket_serv()
 
      if (pid == 0) {
         /* This is the client process */
-        close(sockfd);
-        doprocessing(newsockfd);
+        printf("The fork %d\n", pid);
+        // close(sockfd);
+        int exit_code = doprocessing(newsockfd);
+        if(exit_code == 1)
+          break;
         exit(0);
      }
      else {
-        wait(NULL);
-        close(newsockfd);
      }
-
+     printf("Home!\n");
   }
+  int status = 0;
+  wait(&status);
+  printf("Status: %d\n", WEXITSTATUS(status));
+  close(newsockfd);
 }
 
-void doprocessing (int sock) {
+int doprocessing (int sock) {
   while (1) {
    int n;
    char buffer[256];
@@ -84,8 +96,8 @@ void doprocessing (int sock) {
       exit(1);
    }
 
-   printf("Here is the message: %s\n",buffer);
-   n = write(sock,"I got your message",18);
+   printf("Here is the message: %s\n", buffer);
+   n = write(sock, "I got your message", 18);
    if(buffer[0] == '0')
     break;
    if (n < 0) {
@@ -93,4 +105,6 @@ void doprocessing (int sock) {
       exit(1);
    }
  }
+
+ return 1;
 }
