@@ -10,6 +10,12 @@ pid_t pid_s=0;
 char *shm;
 ```
 
+## fork y exec (para crear el hijo)
+```c
+key = pid_s = execute();
+```
+`execute` en una funcion que le hace fork y exec y devuelve el pid_t del hijo.
+
 ## creamos
 ```c
 /*
