@@ -17,6 +17,7 @@ int show_menu_get_answer(){
 int main(int argc, char const *argv[])
 {
   pid_t root = 0;
+  pthread_t thread;
   char value[10];
   printf("%d\n", getpid());
   int answer = 0;
@@ -31,7 +32,8 @@ int main(int argc, char const *argv[])
           createNode(value, &root);
           sleep(1);
           printf("Node created!\n");
-          socket_client(root);
+          pthread_create(&thread, NULL, socket_client, (void*)&root);
+          //socket_client(root);
         }
         else{
 

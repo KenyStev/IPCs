@@ -162,16 +162,19 @@ int server_io (int sock) {
   return 1;
 }
 //Client section
-void socket_client(int port_number){
+void* socket_client(void* port_number){
   int sock;
   struct sockaddr_in server;
-  socketConfig(&sock, &server, port_number);
+  int* portno = (int*)port_number;
+  socketConfig(&sock, &server, *portno);
 
   puts("Connected\n");
   //keep communicating with server
   socket_write(&sock);
 
   close(sock);
+
+  return NULL;
 }
 void socketConfig(int * sock, struct sockaddr_in* server, int portno){
   //Create socket
@@ -194,11 +197,12 @@ void socketConfig(int * sock, struct sockaddr_in* server, int portno){
   }
 }
 void socket_write(int* sock){
-  char message[20] , server_reply[20];
+  char message[20], server_reply[20];
+  strcpy(message, "hola");
   while(1)
   {
     printf("Enter message : ");
-    scanf("%s" , message);
+    //scanf("%s" , message);
 
     //Send some data
     if( send(*sock , message , strlen(message) , 0) < 0)
