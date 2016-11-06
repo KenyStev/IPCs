@@ -3,23 +3,27 @@
 #include<sys/socket.h>    //socket
 #include<arpa/inet.h> //inet_addr
 
+void socket_client();
 void socketConfig(int * sock, struct sockaddr_in* server);
 void socket_write(int* sock);
 
 int main(int argc , char *argv[])
 {
-    int sock;
-    struct sockaddr_in server;
-    socketConfig(&sock, &server);
-
-    puts("Connected\n");
-    //keep communicating with server
-    socket_write(&sock);
-
-    close(sock);
-    return 0;
+  socket_client();
+  return 0;
 }
 
+void socket_client(){
+  int sock;
+  struct sockaddr_in server;
+  socketConfig(&sock, &server);
+
+  puts("Connected\n");
+  //keep communicating with server
+  socket_write(&sock);
+
+  close(sock);
+}
 void socketConfig(int * sock, struct sockaddr_in* server){
   //Create socket
   *sock = socket(AF_INET , SOCK_STREAM , 0);
@@ -28,19 +32,17 @@ void socketConfig(int * sock, struct sockaddr_in* server){
     printf("Could not create socket");
   }
   puts("Socket created");
-
+  int portno = getppid();//client connects with father
   (*server).sin_addr.s_addr = inet_addr("127.0.0.1");
   (*server).sin_family = AF_INET;
-  (*server).sin_port = htons( 8888 );
-  //Connect to remote server
+  (*server).sin_port = htons( portno );
+
   if (connect(*sock , (struct sockaddr *)server , sizeof(*server)) < 0)
   {
     perror("Connect failed. Error");
     return;
   }
-
 }
-
 void socket_write(int* sock){
   char message[20] , server_reply[20];
   while(1)
