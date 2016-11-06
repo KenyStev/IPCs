@@ -17,6 +17,30 @@ pid_t pid_left, pid_right;
 char *shm, *shm_left, *shm_right, *s, *l, *r;
 char line[1024];
 char  *argU[64];
+/* Handle SIGCHLD by calling clean_up_child_process.  */
+struct sigaction sigchld_action;
+
+void clean_up_child_process (int signal_number)
+{
+     /* Clean up the child process.  */
+     int status;
+     pid_t pid = wait (&status);
+     printf("PID killed: %d\n", pid);
+     /* Store its exit status in a global variable.  */
+     child_exit_status = status;
+
+     if(pid==pid_left)
+          pid_left=0;
+     else if(pid==pid_right)
+          pid_right=0;
+}
+
+void wait_async()
+{
+     memset (&sigchld_action, 0, sizeof (sigchld_action));
+     sigchld_action.sa_handler = &clean_up_child_process;
+     sigaction (SIGCHLD, &sigchld_action, NULL);
+}
 
 void locate_shm(int *shmid,char **shm, key_t key)
 {
@@ -59,9 +83,7 @@ void write_command_in_shm(char *shm)
      char *s = shm;
      while(*send!=0)
           *s++ = *send++;
-     // printf("LLEgo aqui\n");
      *s = '\0';
-     // printf("Paso aqui\n");
 }
 
 void push(char **argU)
@@ -74,6 +96,7 @@ void push(char **argU)
           {
                key_left = pid_left = execute(argU);
                create_shm(&shmid_left, &shm_left,key_left);
+               wait_async();
           }else
           {
                write_command_in_shm(shm_left);
@@ -84,6 +107,7 @@ void push(char **argU)
           {
                key_right = pid_right = execute(argU);
                create_shm(&shmid_right, &shm_right, key_right);
+               wait_async();
           }else
           {
                write_command_in_shm(shm_right);
@@ -108,7 +132,6 @@ void search(char **argU)
 
 int  parse(char *line, char **argU)
 {
-     // printf("line: \n",line);
      int cant=1;
      *argU = "./ptree_node_shm";
      *argU++;
@@ -142,27 +165,8 @@ pid_t  execute(char **argU)
                exit(1);
           }
      }
-     // printf("My child's PID: %d\n", pid);
      return pid;
 }
-
-void clean_up_child_process (int signal_number)
-{
-     /* Clean up the child process.  */
-     int status;
-     pid_t pid = wait (&status);
-     printf("PID Handle: \n", pid);
-     /* Store its exit status in a global variable.  */
-     child_exit_status = status;
-
-     if(pid==pid_left)
-          pid_left=0;
-     else if(pid==pid_right)
-          pid_right=0;
-}
-
-/* Handle SIGCHLD by calling clean_up_child_process.  */
-struct sigaction sigchld_action;
 
 void kill_children()
 {
@@ -170,18 +174,10 @@ void kill_children()
      if(pid_left>0)
      {
           write_command_in_shm(shm_left);
-          // waitpid(pid_left, &child_exit_status, WUNTRACED);
-          memset (&sigchld_action, 0, sizeof (sigchld_action));
-          sigchld_action.sa_handler = &clean_up_child_process;
-          sigaction (SIGCHLD, &sigchld_action, NULL);
      }
      if(pid_right>0)
      {
           write_command_in_shm(shm_right);
-          // waitpid(pid_right, &child_exit_status, WUNTRACED);
-          memset (&sigchld_action, 0, sizeof (sigchld_action));
-          sigchld_action.sa_handler = &clean_up_child_process;
-          sigaction (SIGCHLD, &sigchld_action, NULL);
      }
      exit(0);
 }
@@ -194,16 +190,8 @@ void kill_child(char **argU)
           kill_children();
      }else if(killVal<value){
           write_command_in_shm(shm_left);
-
-          memset (&sigchld_action, 0, sizeof (sigchld_action));
-          sigchld_action.sa_handler = &clean_up_child_process;
-          sigaction (SIGCHLD, &sigchld_action, NULL);
      }else{
           write_command_in_shm(shm_right);
-          
-          memset (&sigchld_action, 0, sizeof (sigchld_action));
-          sigchld_action.sa_handler = &clean_up_child_process;
-          sigaction (SIGCHLD, &sigchld_action, NULL);
      }
 }
 
@@ -236,16 +224,15 @@ int main(int argc, char const *argv[])
           char buffer[1024];
           memcpy(buffer,line,1024);
           parse(buffer,argU);
-          // printf("c1: %s\n", argU[1]);
-          // printf("c2: %s\n", argU[2]);
+          
           if(strcmp(argU[1],"push")==0)
                push(argU);
           if(strcmp(argU[1], "search")==0)
                search(argU);
-          if (strcmp(argU[1], "kill") == 0)
-               kill_child(argU);
           if (strcmp(argU[1], "kill_children") == 0)
                kill_children();
+          if (strcmp(argU[1], "kill") == 0)
+               kill_child(argU);
 
      }
 

@@ -21,6 +21,26 @@ int child_exit_status;
 /* Handle SIGCHLD by calling clean_up_child_process.  */
 struct sigaction sigchld_action;
 
+void clean_up_child_process (int signal_number)
+{
+     /* Clean up the child process.  */
+     int status;
+     pid_t pid = wait (&status);
+     printf("PID killed: %d\n", pid);
+     /* Store its exit status in a global variable.  */
+     child_exit_status = status;
+
+     if(pid==pid_s)
+          pid_s=0;
+}
+
+void wait_async()
+{
+     memset (&sigchld_action, 0, sizeof (sigchld_action));
+     sigchld_action.sa_handler = &clean_up_child_process;
+     sigaction (SIGCHLD, &sigchld_action, NULL);
+}
+
 int  parse(char *line, char **argU)
 {
      int cant=1;
@@ -97,6 +117,7 @@ void push(char **argU)
      if(pid_s==0){
           key = pid_s = execute(argU);
           create_shm(&shmid, &shm,key);
+          wait_async();
      }
      else
      {
@@ -127,19 +148,6 @@ void kill_child(char **argU)
      }
 }
 
-void clean_up_child_process (int signal_number)
-{
-     /* Clean up the child process.  */
-     int status;
-     pid_t pid = wait (&status);
-     printf("PID Handle: \n", pid);
-     /* Store its exit status in a global variable.  */
-     child_exit_status = status;
-
-     if(pid==pid_s)
-          pid_s=0;
-}
-
 int main(int argc, char const *argv[])
 {
      while(1)
@@ -150,17 +158,24 @@ int main(int argc, char const *argv[])
           memcpy(buffer,line,1024);
           cant_parameters = parse(buffer,argU);
           if (strcmp(argU[1], "exit") == 0)  /* is it an "exit"?     */
-             exit(1);
-          if (strcmp(argU[1], "push") == 0)
-               push(argU);
-          if (strcmp(argU[1], "search") == 0)
-               search(argU);
-          if (strcmp(argU[1], "kill") == 0)
           {
+               memcpy(line,"kill_children 0",1024);
+               parse(line,argU);
                kill_child(argU);
-               memset (&sigchld_action, 0, sizeof (sigchld_action));
-               sigchld_action.sa_handler = &clean_up_child_process;
-               sigaction (SIGCHLD, &sigchld_action, NULL);
+               exit(0);
+          }
+          else if(cant_parameters>2)
+          {
+               if (strcmp(argU[1], "push") == 0)
+                    push(argU);
+               if (strcmp(argU[1], "search") == 0)
+                    search(argU);
+               if (strcmp(argU[1], "kill") == 0)
+               {
+                    kill_child(argU);
+               }
+          }else{
+               perror("very few parameters!\n");
           }
      }    
 
