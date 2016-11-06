@@ -31,10 +31,12 @@ void clean_up_child_process (int signal_number)
 
      if(pid==pid_left)
      {
+          free_shm(shm_left,shmid_left);
           pid_left=0;
      }
      else if(pid==pid_right)
      {
+          free_shm(shm_right,shmid_right);
           pid_right=0;
      }
 }
@@ -201,6 +203,7 @@ void kill_child(char **argU)
      int killVal = atoi(argU[2]);
      if (value==killVal)
      {
+          free_shm(shm,shmid);
           kill_children();
      }else if(killVal<value){
           write_command_in_shm(shm_left);
