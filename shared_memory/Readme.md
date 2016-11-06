@@ -59,11 +59,22 @@ shmctl(shmid, IPC_RMID, NULL);
 ```
 para borrar nuestra memoria compartida y liberar nustra RAM, solo necesitamos el identificador que nos fue devuelto por: `shmget`.
 
+## Probar arbol de procesos con Shared Memory
+```
+gcc ptree_node_shm.c -o ptree_node_shm
+gcc ptree_shm.c -o ptree_shm
+./ptree_shm
+```
+abrir otra terminal para ver arbol de procesos
+```
+ps axjf | grep -E "(ptree_shm|ptree_node_shm)"
+```
+
 Fuente:
 -------
 > [Crear y Usar](http://users.cs.cf.ac.uk/Dave.Marshall/C/node27.html)
 > [Borrar y Desanclar](http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/shm/shmdt.html)
 
-Ejercicio desarrollado por:
+Creditos:
 ---------------------------
 Kevin J. Estevez - [@kenystev](https://github.com/KenyStev)
