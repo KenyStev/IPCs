@@ -82,6 +82,27 @@ void createNode(char* num, int* root){
 	}
 }
 
+void deleteChildMsgQ(Node_info* ni){
+	int key, mask, msgid;
+	key = (*ni).mkey;
+	mask = 0666;
+	msgid = msgget(key, mask);	
+
+	if (msgid == -1) {
+		printf("Message queue does not exist.\n");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+		fprintf(stderr, "Message queue could not be deleted.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Message queue was deleted.\n");
+	(*ni).mkey=0;
+	(*ni).mynum=0;
+}
+
 sig_atomic_t child_exit_status;
 struct sigaction sigchld_action;
 

@@ -38,10 +38,11 @@ void validateAnswer(message_buf sbuf, Node_info* ni){
 			(*ni).msgid =initQueue((*ni).mkey);
 		}
 	}else if(sbuf.mtext[0]=='2'){
-		if((*ni).mynum == atoi(num))
-			(*ni).mkey = 0;
 		sendMessage((*ni).msgid,sbuf);
-		(*ni).msgid =initQueue((*ni).mkey);
+		if((*ni).mynum == atoi(num))
+			deleteChildMsgQ(ni);
+		else
+			(*ni).msgid =initQueue((*ni).mkey);
 	}else if(sbuf.mtext[0]=='3'){
 		sendMessage((*ni).msgid,sbuf);
 		(*ni).msgid =initQueue((*ni).mkey);

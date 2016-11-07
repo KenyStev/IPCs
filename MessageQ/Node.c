@@ -14,6 +14,9 @@ void sendMsgChild(Node_info* node,message_buf  *sbuf){
 	if((*node).mkey!=0){
 		sendMessage((*node).msgid,*sbuf);
 		(*node).msgid =initQueue((*node).mkey);
+		if((*sbuf).mtext[0]=='4'){
+			deleteChildMsgQ(node);
+		}
 	}else
 		printf("Nodo.mkey =0\n");
 }
@@ -59,16 +62,18 @@ void validateMsg(int option, char* c_number, Node_info* l_node,Node_info* r_node
 					exit(0);
 				}else if(number< my_num){
 					if((*l_node).mkey!=0){
-						if((*l_node).mynum==number)
-							(*l_node).mkey = 0;
 						sendMessage((*l_node).msgid,*sbuf);
-						(*l_node).msgid =initQueue((*l_node).mkey);
+						if((*l_node).mynum==number){
+							deleteChildMsgQ(l_node);
+						}else
+							(*l_node).msgid =initQueue((*l_node).mkey);
+						
 					}
 				}else{
 					if((*r_node).mkey!=0){
 						sendMessage((*r_node).msgid,*sbuf);
 						if((*r_node).mynum==number){
-							(*r_node).mkey = 0;printf("borro ptr\n");
+							deleteChildMsgQ(r_node);
 						}
 						else{
 							(*r_node).msgid =initQueue((*r_node).mkey);
