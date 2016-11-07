@@ -90,7 +90,7 @@ void parse_message(char* message, char* option, char* value){
 }
 
 void delete_msgq(int msgqid){
-	return;
+	//return;
 	if (msgctl(msgqid, IPC_RMID, NULL) == -1) {
 		perror("msgctl");
 		exit(1);

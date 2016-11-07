@@ -141,9 +141,9 @@ void delete_children(){
 }
 
 void delete_left_child(){
-	//delete_msgq(left_msgq);
+	delete_msgq(left_msgq);
 }
 
 void delete_right_child(){
-	//delete_msgq(right_msgq);
+	delete_msgq(right_msgq);
 }
