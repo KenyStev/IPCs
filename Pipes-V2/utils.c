@@ -15,12 +15,6 @@
 #define MAX_BUF 1024
 #define FIFO_SIZE 6
 
-typedef struct msgqbuf
-{
-  long mtype;
-  char mssg[20];
-} mbuf_t;
-
 sig_atomic_t child_exit_status;
 struct sigaction sigchld_action;
 void clean_up_child_process (int signal_number){

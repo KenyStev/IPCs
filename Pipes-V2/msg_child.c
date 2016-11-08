@@ -19,8 +19,6 @@ void delete_right_child();
 int main(int argc, char *argv[])
 {
 	value = atoi(argv[1]);
-	printf("Node created with value: %d; Pid: %d;\n", value, getpid());
-	mbuf_t buf;
 	parent_fifo = malloc(FIFO_SIZE * sizeof(char));
 	left_fifo = malloc(FIFO_SIZE * sizeof(char));
 	right_fifo = malloc(FIFO_SIZE * sizeof(char));
